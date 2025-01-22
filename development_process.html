@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamlitとMySQLを使用したクエリ実行アプリケーションの開発記録</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: Monaco, Consolas, monospace;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .note {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>StreamlitとMySQLを使用したクエリ実行アプリケーションの開発記録</h1>
+
+    <h2>1. プロジェクト要件</h2>
+    <p>以下の要件で、SQLクエリを実行できるWebアプリケーションの開発を行いました：</p>
+    <ul>
+        <li>クエリ入力フィールドを持つWebインターフェース</li>
+        <li>クエリ実行ボタンの実装</li>
+        <li>クエリ結果の表示機能</li>
+        <li>MySQLデータベースとの連携</li>
+        <li>Streamlitフレームワークの使用</li>
+    </ul>
+
+    <h2>2. 開発環境</h2>
+    <div class="note">
+        <p>データベース接続情報：</p>
+        <ul>
+            <li>データベース名: dev_db001</li>
+            <li>ユーザー: ****</li>
+            <li>ホスト: localhost</li>
+        </ul>
+    </div>
+
+    <h2>3. プロジェクトのセットアップ</h2>
+    <p>まず、プロジェクトディレクトリを作成し、必要なファイルを準備しました：</p>
+    <pre><code>mkdir MyQueryPad001</code></pre>
+
+    <h2>4. 依存関係の管理</h2>
+    <p>必要なパッケージを requirements.txt に記述：</p>
+    <pre><code>streamlit
+mysql-connector-python
+pandas
+sqlalchemy
+pymysql</code></pre>
+
+    <h2>5. アプリケーションの実装</h2>
+    <p>メインアプリケーションコード（app.py）の実装：</p>
+    <pre><code>import streamlit as st
+from sqlalchemy import create_engine
+import pandas as pd
+
+# SQLAlchemy engineの作成
+def init_connection():
+    return create_engine(
+        "mysql+pymysql://****:************@localhost/dev_db001"
+    )
+
+# クエリを実行する関数
+def run_query(query):
+    engine = init_connection()
+    try:
+        return pd.read_sql_query(query, engine)
+    except Exception as e:
+        st.error(f"エラーが発生しました: {str(e)}")
+        return None
+
+# アプリケーションのメイン部分
+def main():
+    st.title("MyQueryPad")
+    
+    # クエリ入力フィールド
+    query = st.text_area("SQLクエリを入力してください:", height=150)
+    
+    # 実行ボタン
+    if st.button("クエリを実行"):
+        if query:
+            # クエリの実行
+            results = run_query(query)
+            if results is not None:
+                # 結果の表示
+                st.success("クエリが正常に実行されました")
+                st.dataframe(results)
+        else:
+            st.warning("クエリを入力してください")
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+    <h2>6. 実装のポイント</h2>
+    <ul>
+        <li>SQLAlchemyを使用したデータベース接続
+            <ul>
+                <li>安全で効率的なデータベース接続の実現</li>
+                <li>Pandasとの優れた互換性</li>
+            </ul>
+        </li>
+        <li>Streamlitのコンポーネント活用
+            <ul>
+                <li>text_area: 複数行のクエリ入力に対応</li>
+                <li>button: クリアな実行トリガーの提供</li>
+                <li>dataframe: 結果の見やすい表示</li>
+            </ul>
+        </li>
+        <li>エラーハンドリング
+            <ul>
+                <li>クエリ実行時の例外処理</li>
+                <li>ユーザーフレンドリーなエラーメッセージ</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>7. アプリケーションの起動</h2>
+    <p>以下のコマンドでアプリケーションを起動：</p>
+    <pre><code>cd MyQueryPad001 && streamlit run app.py</code></pre>
+    <p>アプリケーションは自動的にブラウザで開き、以下のURLでアクセス可能：</p>
+    <ul>
+        <li>ローカルURL: http://localhost:8501</li>
+        <li>ネットワークURL: http://192.168.1.5:8501</li>
+    </ul>
+
+    <h2>8. 開発過程での改善点</h2>
+    <ul>
+        <li>mysql-connector-pythonからSQLAlchemyへの移行
+            <ul>
+                <li>より安定したデータベース接続の実現</li>
+                <li>Pandasとの連携強化</li>
+            </ul>
+        </li>
+        <li>エラーハンドリングの強化
+            <ul>
+                <li>ユーザー入力の検証</li>
+                <li>データベースエラーの適切な処理</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>9. まとめ</h2>
+    <p>本プロジェクトでは、StreamlitとMySQLを組み合わせた簡潔で機能的なクエリ実行アプリケーションを開発しました。
+    主な特徴として：</p>
+    <ul>
+        <li>シンプルで直感的なユーザーインターフェース</li>
+        <li>効率的なデータベース接続と操作</li>
+        <li>見やすい結果表示</li>
+        <li>適切なエラーハンドリング</li>
+    </ul>
+    <p>これらの機能により、データベースクエリのテストや実行を容易に行うことができるツールが完成しました。</p>
+</body>
+</html>
